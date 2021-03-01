@@ -16,6 +16,7 @@ class ViewController: UIViewController {
     
     var activatedButtons = [UIButton]()
     var solutions = [String]()
+    var numberOfButtonsDisappeared = 0
     
     var score = 0 {
         didSet {
@@ -117,7 +118,8 @@ class ViewController: UIViewController {
                 let letterButton = UIButton(type: .system)
                 letterButton.titleLabel?.font = UIFont.systemFont(ofSize: 36)
                 letterButton.setTitle("WWW", for: .normal)
-                
+                letterButton.layer.borderWidth = 5.0
+                letterButton.layer.borderColor = UIColor.darkGray.cgColor
                 let frame = CGRect(x: column * width, y: row * height, width: width, height: height)
                 letterButton.frame = frame
                 letterButton.addTarget(self, action: #selector(letterTapped), for: .touchUpInside)
@@ -138,8 +140,8 @@ class ViewController: UIViewController {
     @objc func submitTapped(_ sender: UIButton) {
         guard let answerText = currentAnswer.text else {return}
         if let solutionPosition = solutions.firstIndex(of: answerText) {
+            numberOfButtonsDisappeared += activatedButtons.count
             activatedButtons.removeAll()
-            
             var splitAnswers = answersLabel.text?.components(separatedBy: "\n")
             splitAnswers?[solutionPosition] = answerText
             answersLabel.text = splitAnswers?.joined(separator: "\n")
@@ -147,11 +149,22 @@ class ViewController: UIViewController {
             currentAnswer.text = ""
             score += 1
             
-            if score % 7 == 0 {
-                let ac = UIAlertController(title: "Well Done!", message: "Are you ready for next level", preferredStyle: .alert)
-                ac.addAction(UIAlertAction(title: "Lets go!", style: .default, handler: levelUp))
+            if numberOfButtonsDisappeared >= 20 {
+                let ac = UIAlertController(title: "You won!!!", message: "Lets goto next level", preferredStyle: .alert)
+                ac.addAction(UIAlertAction(title: "LEVEL UP!", style: .default, handler: levelUp))
                 present(ac, animated: true)
             }
+        } else {
+            score -= 1
+            let ac = UIAlertController(title: "Wrong Guess!!", message: "Please Try again!", preferredStyle: .alert)
+            ac.addAction(UIAlertAction(title: "OK", style: .default, handler: { [self] (_) in
+                currentAnswer.text = ""
+                for btn in activatedButtons {
+                    btn.isHidden = false
+                }
+                activatedButtons.removeAll()
+            }))
+            present(ac, animated: true)
         }
         
     }
